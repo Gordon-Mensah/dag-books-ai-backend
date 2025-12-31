@@ -270,6 +270,16 @@
   </div>
 
   <script>
+    /* ----------------------------------------
+       BACKEND URL (auto-switch local/Render)
+    ---------------------------------------- */
+
+    const API_BASE =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://127.0.0.1:8000"
+        : "https://dag-books-ai-backend.onrender.com";
+
     /* ------------------------------
        SEARCH HISTORY SYSTEM
     ------------------------------ */
@@ -358,7 +368,7 @@
 
       searches[currentSearchId].query = query;
 
-      const res = await fetch("http://127.0.0.1:8000/find-book", {
+      const res = await fetch(`${API_BASE}/find-book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query })

@@ -200,39 +200,6 @@
     button.send:hover {
       opacity: 0.9;
     }
-    /* RECOMMENDED BOOKS */
-    .recommended-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin-top: 10px;
-    }
-
-    .rec-card {
-    background: #1a1a1a;
-    border: 1px solid #222;
-    padding: 20px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-    }
-
-    .rec-card:hover {
-    background: #222;
-    }
-
-    .rec-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.1rem;
-    color: #fff;
-    }
-
-    .rec-card p {
-    color: #bbb;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    }
-
   </style>
 </head>
 
@@ -283,6 +250,16 @@
   </div>
 
   <script>
+    /* ----------------------------------------
+       BACKEND URL (auto-switch local/Render)
+    ---------------------------------------- */
+
+    const API_BASE =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://127.0.0.1:8000"
+        : "https://dag-books-ai-backend.onrender.com";
+
     /* ------------------------------
        CHAT HISTORY SYSTEM
     ------------------------------ */
@@ -348,7 +325,7 @@
     const preselectedBook = params.get("book");
 
     async function loadBooks() {
-      const res = await fetch("http://127.0.0.1:8000/books");
+      const res = await fetch(`${API_BASE}/books`);
       const data = await res.json();
       const select = document.getElementById("book");
 
@@ -369,7 +346,7 @@
       const chapterSelect = document.getElementById("chapter");
       chapterSelect.innerHTML = "";
 
-      const res = await fetch(`http://127.0.0.1:8000/chapters/${encodeURIComponent(book)}`);
+      const res = await fetch(`${API_BASE}/chapters/${encodeURIComponent(book)}`);
       const data = await res.json();
 
       data.chapters.forEach(ch => {
@@ -410,7 +387,7 @@
       // Add empty AI bubble for streaming
       const aiBubble = addBubble("", "ai");
 
-      const res = await fetch("http://127.0.0.1:8000/ask", {
+      const res = await fetch(`${API_BASE}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question, book, chapter })
@@ -429,7 +406,8 @@
         for (let char of chunk) {
           result += char;
           aiBubble.textContent = result;
-          document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+          document.getElementById("chat").scrollTop =
+            document.getElementById("chat").scrollHeight;
           await new Promise(r => setTimeout(r, 8));
         }
       }
@@ -445,13 +423,16 @@
     loadBooks();
     loadChatList();
 
-    // If no chats exist, create one + onboarding message
     if (Object.keys(chats).length === 0) {
       newChat();
-      addBubble("Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter.", "ai");
+      addBubble(
+        "Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter.",
+        "ai"
+      );
       chats[currentChatId].messages.push({
         role: "ai",
-        content: "Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter."
+        content:
+          "Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter."
       });
       saveChats();
     }

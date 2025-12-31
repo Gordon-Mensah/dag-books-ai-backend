@@ -331,10 +331,10 @@
   </footer>
 
   <script>
-    // Highlight active nav link
-    const path = window.location.pathname;
+    // Highlight active nav link (works on local + Render)
+    const page = window.location.pathname.split("/").pop();
 
-    if (path.includes("home")) {
+    if (page === "home.html" || page === "") {
       document.getElementById("nav-home").classList.add("active");
     }
   </script>
