@@ -112,11 +112,17 @@
       font-weight: 600;
     }
 
-    /* SELECTORS */
-    .selectors {
+    /* SELECTORS + SUMMARY */
+    .top-row {
       display: flex;
       gap: 20px;
       margin-bottom: 20px;
+    }
+
+    .selectors {
+      flex: 1;
+      display: flex;
+      gap: 10px;
     }
 
     select {
@@ -127,6 +133,28 @@
       background: #1a1a1a;
       color: #e6e6e6;
       font-size: 1rem;
+    }
+
+    /* Chapter dropdown hidden for now */
+    #chapterSelect {
+      display: none;
+    }
+
+    .book-summary {
+      flex: 1;
+      background: #111;
+      border-radius: 12px;
+      border: 1px solid #222;
+      padding: 14px;
+      font-size: 0.95rem;
+      color: #ccc;
+      line-height: 1.5;
+    }
+
+    .book-summary h3 {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      color: #fff;
     }
 
     /* CHAT WINDOW */
@@ -166,6 +194,12 @@
       border-bottom-left-radius: 0;
     }
 
+    .typing {
+      font-size: 0.9rem;
+      color: #aaa;
+      font-style: italic;
+    }
+
     /* INPUT AREA */
     .input-area {
       display: flex;
@@ -200,6 +234,41 @@
     button.send:hover {
       opacity: 0.9;
     }
+
+    /* RECOMMENDED BOOKS */
+    .recommended-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .rec-card {
+      background: #111;
+      border: 1px solid #222;
+      padding: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    .rec-card:hover {
+      background: #222;
+    }
+
+    .rec-card h4 {
+      margin: 0 0 6px 0;
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .rec-card p {
+      margin: 0;
+      color: #bbb;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -215,9 +284,9 @@
 
     <div class="help-box">
       <strong>How to use:</strong><br><br>
-      1. Select a book & chapter.<br>
+      1. Select a book.<br>
       2. Ask any question.<br>
-      3. AI answers using ONLY that chapter.<br>
+      3. AI answers using ONLY that book.<br>
       4. Chats are saved automatically.
     </div>
   </div>
@@ -232,19 +301,34 @@
       <a href="/ask" class="active">Ask Question</a>
     </div>
 
-    <!-- SELECTORS -->
-    <div class="selectors">
-      <select id="book"></select>
-      <select id="chapter"></select>
+    <!-- SELECTORS + SUMMARY -->
+    <div class="top-row">
+      <div class="selectors">
+        <select id="bookSelect"></select>
+        <select id="chapterSelect"></select> <!-- Hidden for now -->
+      </div>
+
+      <div class="book-summary" id="bookSummary">
+        <h3>Book summary</h3>
+        <p>Select a book to see a short summary of what it covers.</p>
+      </div>
     </div>
 
     <!-- CHAT WINDOW -->
-    <div class="chat-window" id="chat"></div>
+    <div class="chat-window" id="chatWindow"></div>
+
+    <!-- RECOMMENDED BOOKS -->
+    <div id="recommendedSection" style="margin-top: 20px;">
+      <h3 style="margin-bottom:10px; font-size:1rem; font-weight:600; color:#fff;">
+        Recommended next reads
+      </h3>
+      <div id="recommendedBooks" class="recommended-grid"></div>
+    </div>
 
     <!-- INPUT AREA -->
     <div class="input-area">
-      <textarea id="question" placeholder="Ask something about this chapter..."></textarea>
-      <button class="send" onclick="sendMessage()">Send</button>
+      <textarea id="questionInput" placeholder="Ask something about this book..."></textarea>
+      <button class="send" onclick="sendQuestion()">Send</button>
     </div>
 
   </div>
@@ -253,17 +337,15 @@
     /* ----------------------------------------
        BACKEND URL (auto-switch local/Render)
     ---------------------------------------- */
-
     const API_BASE =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
         ? "http://127.0.0.1:8000"
-        : "https://dagbooks-ai.onrender.com";
+        : window.location.origin;
 
-    /* ------------------------------
-       CHAT HISTORY SYSTEM
-    ------------------------------ */
-
+    /* ----------------------------------------
+       CHAT HISTORY
+    ---------------------------------------- */
     let chats = JSON.parse(localStorage.getItem("chats") || "{}");
     let currentChatId = null;
 
@@ -274,12 +356,12 @@
     function newChat() {
       currentChatId = "chat_" + Date.now();
       chats[currentChatId] = {
-        title: "New Chat",
+        book: getSelectedBook(),
         messages: []
       };
       saveChats();
       loadChatList();
-      loadChat(currentChatId);
+      clearChatWindow();
     }
 
     function loadChatList() {
@@ -289,7 +371,10 @@
       Object.entries(chats).forEach(([id, chat]) => {
         const div = document.createElement("div");
         div.className = "chat-item";
-        div.textContent = chat.title || "Untitled Chat";
+        const title = chat.book || "No book selected";
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        const preview = lastMsg ? lastMsg.content.slice(0, 40) + "..." : "New conversation";
+        div.innerHTML = `<strong>${title}</strong><br><span style="font-size:0.85rem;color:#aaa;">${preview}</span>`;
         div.onclick = () => loadChat(id);
         list.appendChild(div);
       });
@@ -297,145 +382,249 @@
 
     function loadChat(id) {
       currentChatId = id;
-      const chatWindow = document.getElementById("chat");
-      chatWindow.innerHTML = "";
-
-      chats[id].messages.forEach(msg => {
-        addBubble(msg.content, msg.role);
-      });
-
-      chatWindow.scrollTop = chatWindow.scrollHeight;
+      const chat = chats[id];
+      if (chat.book) {
+        setSelectedBook(chat.book);
+      }
+      clearChatWindow();
+      chat.messages.forEach(msg => addMessage(msg.role, msg.content, false));
     }
 
-    function addBubble(text, sender) {
-      const chatWindow = document.getElementById("chat");
+    function clearChatWindow() {
+      document.getElementById("chatWindow").innerHTML = "";
+    }
+
+    function addMessage(role, content, save = true) {
+      const chatWindow = document.getElementById("chatWindow");
       const div = document.createElement("div");
-      div.className = `bubble ${sender}`;
-      div.textContent = text;
+      div.className = `bubble ${role === "user" ? "user" : "ai"}`;
+      div.textContent = content;
       chatWindow.appendChild(div);
       chatWindow.scrollTop = chatWindow.scrollHeight;
-      return div;
+
+      if (save) {
+        if (!currentChatId) {
+          newChat();
+        }
+        chats[currentChatId].book = getSelectedBook();
+        chats[currentChatId].messages.push({ role, content });
+        saveChats();
+        loadChatList();
+      }
     }
 
-    /* ------------------------------
-       BOOK + CHAPTER LOADING
-    ------------------------------ */
+    function showTypingIndicator() {
+      const chatWindow = document.getElementById("chatWindow");
+      let typing = document.getElementById("typingIndicator");
+      if (!typing) {
+        typing = document.createElement("div");
+        typing.id = "typingIndicator";
+        typing.className = "bubble ai typing";
+        typing.textContent = "Thinking...";
+        chatWindow.appendChild(typing);
+      }
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 
-    const params = new URLSearchParams(window.location.search);
-    const preselectedBook = params.get("book");
+    function removeTypingIndicator() {
+      const typing = document.getElementById("typingIndicator");
+      if (typing) typing.remove();
+    }
+
+    /* ----------------------------------------
+       BOOKS + SUMMARIES + RECOMMENDED
+    ---------------------------------------- */
 
     async function loadBooks() {
-      const res = await fetch(`${API_BASE}/books`);
-      const data = await res.json();
-      const select = document.getElementById("book");
+      try {
+        const res = await fetch(`${API_BASE}/books`);
+        const data = await res.json();
+        const select = document.getElementById("bookSelect");
+        select.innerHTML = `<option value="">Select a book...</option>`;
 
-      data.books.forEach(book => {
-        const option = document.createElement("option");
-        option.value = book;
-        option.textContent = book;
-        select.appendChild(option);
-      });
+        data.books.forEach(book => {
+          const option = document.createElement("option");
+          option.value = book.title;
+          option.textContent = book.title;
+          option.dataset.summary = book.summary || "";
+          select.appendChild(option);
+        });
 
-      if (preselectedBook) {
-        select.value = preselectedBook;
-        loadChapters(preselectedBook);
+        // If URL has ?book=, preselect
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookFromUrl = urlParams.get("book");
+        if (bookFromUrl) {
+          setSelectedBook(bookFromUrl);
+        } else if (data.books.length > 0) {
+          setSelectedBook(data.books[0].title);
+        }
+
+        updateBookSummary();
+        loadRecommendedForCurrentBook();
+      } catch (err) {
+        console.error("Failed to load books:", err);
       }
     }
 
-    async function loadChapters(book) {
-      const chapterSelect = document.getElementById("chapter");
-      chapterSelect.innerHTML = "";
-
-      const res = await fetch(`${API_BASE}/chapters/${encodeURIComponent(book)}`);
-      const data = await res.json();
-
-      data.chapters.forEach(ch => {
-        const option = document.createElement("option");
-        option.value = ch;
-        option.textContent = ch;
-        chapterSelect.appendChild(option);
-      });
+    function getSelectedBook() {
+      const select = document.getElementById("bookSelect");
+      return select.value || "";
     }
 
-    document.getElementById("book").addEventListener("change", () => {
-      loadChapters(document.getElementById("book").value);
+    function setSelectedBook(title) {
+      const select = document.getElementById("bookSelect");
+      Array.from(select.options).forEach(opt => {
+        if (opt.value === title) {
+          opt.selected = true;
+        }
+      });
+      updateBookSummary();
+      loadRecommendedForCurrentBook();
+    }
+
+    function updateBookSummary() {
+      const select = document.getElementById("bookSelect");
+      const summaryBox = document.getElementById("bookSummary");
+      const selected = select.selectedOptions[0];
+
+      if (selected && selected.value) {
+        const summary = selected.dataset.summary || "No summary available for this book yet.";
+        summaryBox.innerHTML = `
+          <h3>${selected.value}</h3>
+          <p>${summary}</p>
+        `;
+      } else {
+        summaryBox.innerHTML = `
+          <h3>Book summary</h3>
+          <p>Select a book to see a short summary of what it covers.</p>
+        `;
+      }
+    }
+
+    async function loadRecommendedForCurrentBook() {
+      const book = getSelectedBook();
+      const container = document.getElementById("recommendedBooks");
+      if (!book) {
+        container.innerHTML = "";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/recommended/${encodeURIComponent(book)}`);
+        const data = await res.json();
+        container.innerHTML = "";
+
+        if (!data.recommended || data.recommended.length === 0) {
+          container.innerHTML = `<span style="font-size:0.9rem;color:#888;">No recommendations available yet.</span>`;
+          return;
+        }
+
+        data.recommended.forEach(title => {
+          const card = document.createElement("div");
+          card.className = "rec-card";
+          card.innerHTML = `
+            <h4>${title}</h4>
+            <p>Tap to switch to this book and ask follow‑up questions.</p>
+          `;
+          card.onclick = () => {
+            setSelectedBook(title);
+          };
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Failed to load recommended books:", err);
+      }
+    }
+
+    document.getElementById("bookSelect").addEventListener("change", () => {
+      updateBookSummary();
+      loadRecommendedForCurrentBook();
     });
 
-    /* ------------------------------
-       SEND MESSAGE + STREAMING
-    ------------------------------ */
+    /* ----------------------------------------
+       SEND QUESTION (STREAMING)
+    ---------------------------------------- */
 
-    async function sendMessage() {
-      const book = document.getElementById("book").value;
-      const chapter = document.getElementById("chapter").value;
-      const question = document.getElementById("question").value;
+    async function sendQuestion() {
+      const questionInput = document.getElementById("questionInput");
+      const question = questionInput.value.trim();
+      const book = getSelectedBook();
 
-      if (!question.trim()) return;
-
-      // Create chat if none exists
-      if (!currentChatId) newChat();
-
-      // Add user bubble
-      addBubble(question, "user");
-      chats[currentChatId].messages.push({ role: "user", content: question });
-      chats[currentChatId].title = question.slice(0, 30);
-      saveChats();
-      loadChatList();
-
-      document.getElementById("question").value = "";
-
-      // Add empty AI bubble for streaming
-      const aiBubble = addBubble("", "ai");
-
-      const res = await fetch(`${API_BASE}/ask`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, book, chapter })
-      });
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let result = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-
-        for (let char of chunk) {
-          result += char;
-          aiBubble.textContent = result;
-          document.getElementById("chat").scrollTop =
-            document.getElementById("chat").scrollHeight;
-          await new Promise(r => setTimeout(r, 8));
-        }
+      if (!book) {
+        alert("Please select a book first.");
+        return;
+      }
+      if (!question) {
+        return;
       }
 
-      chats[currentChatId].messages.push({ role: "ai", content: result });
-      saveChats();
+      addMessage("user", question);
+      questionInput.value = "";
+
+      showTypingIndicator();
+
+      try {
+        const res = await fetch(`${API_BASE}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, book })
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let aiMessage = "";
+        let aiBubble = null;
+
+        removeTypingIndicator();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          aiMessage += chunk;
+
+          if (!aiBubble) {
+            aiBubble = document.createElement("div");
+            aiBubble.className = "bubble ai";
+            aiBubble.textContent = "";
+            document.getElementById("chatWindow").appendChild(aiBubble);
+          }
+
+          aiBubble.textContent = aiMessage;
+          const chatWindow = document.getElementById("chatWindow");
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        if (aiMessage) {
+          if (!currentChatId) newChat();
+          chats[currentChatId].book = getSelectedBook();
+          chats[currentChatId].messages.push({ role: "assistant", content: aiMessage });
+          saveChats();
+          loadChatList();
+        }
+
+      } catch (err) {
+        removeTypingIndicator();
+        console.error("Error calling /ask:", err);
+        addMessage("assistant", "Sorry, something went wrong while contacting the server.");
+      }
     }
 
-    /* ------------------------------
+    /* ----------------------------------------
        INITIAL LOAD
-    ------------------------------ */
+    ---------------------------------------- */
 
-    loadBooks();
     loadChatList();
+    loadBooks();
 
     if (Object.keys(chats).length === 0) {
       newChat();
-      addBubble(
-        "Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter.",
-        "ai"
+      addMessage(
+        "assistant",
+        "Welcome! Select a book and ask any question. I’ll answer using ONLY that book."
       );
-      chats[currentChatId].messages.push({
-        role: "ai",
-        content:
-          "Welcome! Select a book and chapter, then ask any question. I'll answer using ONLY that chapter."
-      });
-      saveChats();
     }
   </script>
+
 </body>
 </html>

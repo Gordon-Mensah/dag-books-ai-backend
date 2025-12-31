@@ -89,6 +89,45 @@
       opacity: 0.9;
     }
 
+    /* SUMMARIES SECTION */
+    .summaries {
+      margin-top: 80px;
+      text-align: center;
+    }
+
+    .summaries h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: #fff;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 25px;
+    }
+
+    .summary-card {
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      text-align: left;
+    }
+
+    .summary-card h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+
+    .summary-card p {
+      color: #ccc;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
     /* HOW IT WORKS */
     .how-it-works {
       margin-top: 80px;
@@ -235,6 +274,14 @@
     <a href="/ask">Ask a Question</a>
   </div>
 
+  <!-- SUMMARIES SECTION -->
+  <section class="summaries">
+    <h2>Popular Summaries</h2>
+    <div id="summary-container" class="summary-grid">
+      <!-- Filled dynamically -->
+    </div>
+  </section>
+
   <!-- HOW IT WORKS -->
   <section class="how-it-works">
     <h2>How It Works</h2>
@@ -243,37 +290,25 @@
       <div class="step">
         <div class="step-number">1</div>
         <h3>Search by Topic</h3>
-        <p>
-          Not sure which book to read? Use the Book Finder to search across all
-          Dag Heward‑Mills books by topic, theme, or idea.
-        </p>
+        <p>Use the Book Finder to search across all Dag Heward‑Mills books by topic, theme, or idea.</p>
       </div>
 
       <div class="step">
         <div class="step-number">2</div>
         <h3>Pick the Right Book</h3>
-        <p>
-          Instantly see which books and chapters match your topic, complete with
-          short excerpts to help you choose.
-        </p>
+        <p>Instantly see which books match your topic, complete with short excerpts.</p>
       </div>
 
       <div class="step">
         <div class="step-number">3</div>
         <h3>Ask Deep Questions</h3>
-        <p>
-          Once you select a book, ask any question and get answers strictly from
-          the book’s content — no hallucinations, no guessing.
-        </p>
+        <p>Ask any question and get answers strictly from the book’s content — no hallucinations.</p>
       </div>
 
       <div class="step">
         <div class="step-number">4</div>
         <h3>Streamed, Real‑Time Answers</h3>
-        <p>
-          Enjoy a smooth, typing‑style response powered by AI, giving you clarity
-          and insight in real time.
-        </p>
+        <p>Enjoy smooth, typing‑style responses powered by AI.</p>
       </div>
     </div>
   </section>
@@ -296,32 +331,22 @@
     <div class="feature-grid">
       <div class="feature">
         <h3>Topic‑Based Search</h3>
-        <p>Find the exact book and chapter that speaks to your question.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Chapter‑Level Precision</h3>
-        <p>Drill down into specific chapters for deeper, more accurate insights.</p>
+        <p>Find the exact book that speaks to your question.</p>
       </div>
 
       <div class="feature">
         <h3>AI‑Powered Answers</h3>
-        <p>Get responses strictly from the books — no hallucinations, no guessing.</p>
+        <p>Get responses strictly from the books — no hallucinations.</p>
       </div>
 
       <div class="feature">
         <h3>Real‑Time Streaming</h3>
-        <p>Enjoy smooth, typing‑style answers that feel alive and responsive.</p>
+        <p>Enjoy smooth, typing‑style answers that feel alive.</p>
       </div>
 
       <div class="feature">
         <h3>Clean Quantum UI</h3>
-        <p>A modern, cinematic interface designed for clarity and focus.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Multi‑Page Navigation</h3>
-        <p>Move seamlessly between finding books and asking questions.</p>
+        <p>A modern, cinematic interface designed for clarity.</p>
       </div>
     </div>
   </section>
@@ -331,12 +356,41 @@
   </footer>
 
   <script>
-    // Highlight active nav link (works on local + Render)
-    const page = window.location.pathname.split("/").pop();
+    const API_BASE = window.location.origin;
 
+    // Highlight active nav link
+    const page = window.location.pathname.split("/").pop();
     if (page === "home.html" || page === "") {
       document.getElementById("nav-home").classList.add("active");
     }
+
+    // Load summaries dynamically
+    async function loadSummaries() {
+      try {
+        const res = await fetch(`${API_BASE}/books`);
+        const data = await res.json();
+
+        const container = document.getElementById("summary-container");
+        container.innerHTML = "";
+
+        data.books.slice(0, 4).forEach(book => {
+          const card = document.createElement("div");
+          card.className = "summary-card";
+
+          card.innerHTML = `
+            <h3>${book.title}</h3>
+            <p>${book.summary}</p>
+          `;
+
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error("Failed to load summaries:", err);
+      }
+    }
+
+    loadSummaries();
   </script>
 
 </body>
