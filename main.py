@@ -11,9 +11,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------
-# Initialize FastAPI
+# Initialize FastAPI with Swagger UI
 # ---------------------------------------------------------
-app = FastAPI()
+app = FastAPI(
+    title="DAG BOOKS AI",
+    description="API for book search and chapter-based QA",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 app.add_middleware(
     CORSMiddleware,
