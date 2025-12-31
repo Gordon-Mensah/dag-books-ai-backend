@@ -1,5 +1,7 @@
-.venv/
-.env
+venv/
 __pycache__/
+vectorstore/
 *.pyc
-vectorstore/*.lock
+*.pyd
+*.db
+.env
