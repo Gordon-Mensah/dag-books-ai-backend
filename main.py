@@ -1,15 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import chromadb
 from groq import Groq
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
-print("DEBUG KEY:", os.getenv("GROQ_API_KEY"))
-
-
 
 # ---------------------------------------------------------
 # Initialize FastAPI
@@ -23,6 +22,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------
+# Serve static frontend files
+# ---------------------------------------------------------
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_home():
+    return FileResponse("static/home.html")
+
+@app.get("/home")
+def serve_home_alias():
+    return FileResponse("static/home.html")
+
+@app.get("/finder")
+def serve_finder():
+    return FileResponse("static/finder.html")
+
+@app.get("/ask")
+def serve_ask():
+    return FileResponse("static/ask.html")
 
 # ---------------------------------------------------------
 # Connect to ChromaDB (your existing vectorstore)
@@ -77,7 +97,6 @@ def list_chapters(book: str):
 # ---------------------------------------------------------
 @app.post("/find-book")
 def find_book(req: BookFinderRequest):
-
     q_embed = embed(req.query)
 
     results = collection.query(
@@ -126,7 +145,6 @@ def stream_groq_response(prompt: str):
 # ---------------------------------------------------------
 @app.post("/ask")
 def ask_question(req: AskRequest):
-
     q_embed = embed(req.question)
 
     where_filter = {"book": req.book}
