@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DAG BOOKS AI</title>
+
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background: #0d0d0d;
+      color: #e6e6e6;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    h2 {
+      margin-top: 40px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    label {
+      margin-top: 15px;
+      display: block;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #e6e6e6;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #answer {
+      margin-top: 25px;
+      padding: 20px;
+      background: #111;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 1rem;
+      border: 1px solid #222;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    #finder-results div {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>DAG BOOKS AI</h1>
+
+  <!-- BOOK FINDER MODE -->
+  <h2>Not sure which book?</h2>
+
+  <label for="finder">Ask what topic you're looking for:</label>
+  <textarea id="finder" rows="3" placeholder="Which book talks about humility?"></textarea>
+
+  <button onclick="findBook()">Find Book</button>
+
+  <div id="finder-results"></div>
+
+  <hr style="margin: 40px 0; border-color: #333;">
+
+  <!-- MAIN RAG MODE -->
+  <label for="book">Select a book:</label>
+  <select id="book"></select>
+
+  <label for="chapter">Select a chapter:</label>
+  <select id="chapter"></select>
+
+  <label for="question">Ask a question:</label>
+  <textarea id="question" rows="4" placeholder="What does the book say about humility?"></textarea>
+
+  <button onclick="askQuestion()">Ask</button>
+
+  <div id="answer"></div>
+
+  <script>
+    // Load books on startup
+    async function loadBooks() {
+      const res = await fetch("http://127.0.0.1:8000/books");
+      const data = await res.json();
+      const select = document.getElementById("book");
+
+      data.books.forEach(book => {
+        const option = document.createElement("option");
+        option.value = book;
+        option.textContent = book;
+        select.appendChild(option);
+      });
+    }
+
+    // Load chapters when a book is selected
+    document.getElementById("book").addEventListener("change", async () => {
+      const book = document.getElementById("book").value;
+      const chapterSelect = document.getElementById("chapter");
+      chapterSelect.innerHTML = "";
+
+      const res = await fetch(`http://127.0.0.1:8000/chapters/${encodeURIComponent(book)}`);
+      const data = await res.json();
+
+      data.chapters.forEach(ch => {
+        const option = document.createElement("option");
+        option.value = ch;
+        option.textContent = ch;
+        chapterSelect.appendChild(option);
+      });
+    });
+
+    // Ask question with streaming + typing animation
+    async function askQuestion() {
+      const book = document.getElementById("book").value;
+      const chapter = document.getElementById("chapter").value;
+      const question = document.getElementById("question").value;
+      const answerBox = document.getElementById("answer");
+
+      answerBox.textContent = "";
+
+      const res = await fetch("http://127.0.0.1:8000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, book, chapter })
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let result = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+
+        for (let char of chunk) {
+          result += char;
+          answerBox.textContent = result;
+
+          // Auto-scroll
+          answerBox.scrollTop = answerBox.scrollHeight;
+
+          // Typing animation speed
+          await new Promise(r => setTimeout(r, 8));
+        }
+      }
+    }
+
+    // Book Finder Mode
+    async function findBook() {
+      const query = document.getElementById("finder").value;
+      const resultsBox = document.getElementById("finder-results");
+      resultsBox.innerHTML = "Searching...";
+
+      const res = await fetch("http://127.0.0.1:8000/find-book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await res.json();
+      resultsBox.innerHTML = "";
+
+      data.matches.forEach(match => {
+        const div = document.createElement("div");
+        div.style.marginTop = "15px";
+        div.style.padding = "10px";
+        div.style.background = "#1a1a1a";
+        div.style.borderRadius = "8px";
+        div.style.border = "1px solid #333";
+
+        div.innerHTML = `
+          <strong>${match.book}</strong><br>
+          Chapter: ${match.chapter || "Unknown"}<br><br>
+          <em>${match.excerpt}</em>
+        `;
+
+        div.onclick = () => {
+          document.getElementById("book").value = match.book;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        };
+
+        resultsBox.appendChild(div);
+      });
+    }
+
+    loadBooks();
+  </script>
+</body>
+</html>

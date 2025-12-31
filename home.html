@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DAG BOOKS AI — Home</title>
+
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background: #0d0d0d;
+      color: #e6e6e6;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #111;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .nav-right a {
+      margin-left: 20px;
+      color: #bbb;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+
+    .nav-right a:hover {
+      color: #fff;
+    }
+
+    .nav-right a.active {
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    /* HERO SECTION */
+    .hero-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: #ccc;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    /* ACTION BUTTONS */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .action-buttons a {
+      padding: 18px 30px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      transition: 0.2s;
+    }
+
+    .action-buttons a:hover {
+      opacity: 0.9;
+    }
+
+    /* HOW IT WORKS */
+    .how-it-works {
+      margin-top: 80px;
+      text-align: center;
+    }
+
+    .how-it-works h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .step {
+      background: #111;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      text-align: left;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .step h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+
+    .step p {
+      color: #ccc;
+      line-height: 1.5;
+    }
+
+    /* WHY IT MATTERS */
+    .why {
+      margin-top: 100px;
+      text-align: center;
+    }
+
+    .why h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .why p {
+      font-size: 1.2rem;
+      color: #ccc;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* FEATURES GRID */
+    .features {
+      margin-top: 80px;
+    }
+
+    .features h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 30px;
+    }
+
+    .feature {
+      background: #111;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      text-align: left;
+    }
+
+    .feature h3 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .feature p {
+      color: #ccc;
+      line-height: 1.5;
+    }
+
+    /* FOOTER */
+    footer {
+      margin-top: 80px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <span class="logo">DAG BOOKS AI</span>
+    </div>
+
+    <div class="nav-right">
+      <a href="home.html" id="nav-home">Home</a>
+      <a href="finder.html" id="nav-finder">Find Book</a>
+      <a href="ask.html" id="nav-ask">Ask Question</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <h1 class="hero-title">Discover. Explore. Understand.</h1>
+  <p class="hero-subtitle">
+    DAG BOOKS AI helps you explore the teachings of Bishop Dag Heward‑Mills.<br>
+    Search by topic, find the right book, and ask deep questions — all powered by AI.
+  </p>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-buttons">
+    <a href="finder.html">Find a Book</a>
+    <a href="ask.html">Ask a Question</a>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works">
+    <h2>How It Works</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Search by Topic</h3>
+        <p>
+          Not sure which book to read? Use the Book Finder to search across all
+          Dag Heward‑Mills books by topic, theme, or idea.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Pick the Right Book</h3>
+        <p>
+          Instantly see which books and chapters match your topic, complete with
+          short excerpts to help you choose.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Ask Deep Questions</h3>
+        <p>
+          Once you select a book, ask any question and get answers strictly from
+          the book’s content — no hallucinations, no guessing.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>Streamed, Real‑Time Answers</h3>
+        <p>
+          Enjoy a smooth, typing‑style response powered by AI, giving you clarity
+          and insight in real time.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY IT MATTERS -->
+  <section class="why">
+    <h2>Why It Matters</h2>
+    <p>
+      With over 80+ books and thousands of pages of teaching, it can be difficult
+      to know where to start. DAG BOOKS AI helps you cut through the noise,
+      discover the right book instantly, and explore the wisdom you need — when
+      you need it most.
+    </p>
+  </section>
+
+  <!-- FEATURES GRID -->
+  <section class="features">
+    <h2>Features</h2>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <h3>Topic‑Based Search</h3>
+        <p>Find the exact book and chapter that speaks to your question.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Chapter‑Level Precision</h3>
+        <p>Drill down into specific chapters for deeper, more accurate insights.</p>
+      </div>
+
+      <div class="feature">
+        <h3>AI‑Powered Answers</h3>
+        <p>Get responses strictly from the books — no hallucinations, no guessing.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Real‑Time Streaming</h3>
+        <p>Enjoy smooth, typing‑style answers that feel alive and responsive.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Clean Quantum UI</h3>
+        <p>A modern, cinematic interface designed for clarity and focus.</p>
+      </div>
+
+      <div class="feature">
+        <h3>Multi‑Page Navigation</h3>
+        <p>Move seamlessly between finding books and asking questions.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 DAG BOOKS AI — Built with love and clarity.
+  </footer>
+
+  <script>
+    // Highlight active nav link
+    const path = window.location.pathname;
+
+    if (path.includes("home")) {
+      document.getElementById("nav-home").classList.add("active");
+    }
+  </script>
+
+</body>
+</html>
